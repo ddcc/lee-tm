@@ -1,4 +1,4 @@
-CPP = /usr/bin/g++-3.4
+CPP = /usr/bin/g++
 
 TINY_STM_ROOT_DIR = ../tinySTM
 
@@ -11,7 +11,7 @@ SRC_DIR = ./src
 TARGET_DIR = ./target
 OBJ_DIR = ./target/obj
 
-LDFLAGS = -lrt -lpthread -L$(TINY_STM_BIN_DIR) -ltstm
+LDFLAGS = -lrt -lpthread -L$(TINY_STM_BIN_DIR) -lstm
 
 CPPFLAGS = -DSTM -DX86 -DLINUX -D_REENTRANT -DNDEBUG -O3 -I$(TINY_STM_INC_DIR)
 

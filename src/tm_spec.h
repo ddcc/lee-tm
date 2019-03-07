@@ -37,27 +37,7 @@
 #define TM_SPEC_H_
 
 #include <pthread.h>
-#include "tinySTM.h"
-
-//////////////////
-// declarations //
-//////////////////
-
-void *tm_read_word(void *addr);
-
-void tm_write_word(void *addr, void *val);
-
-
-/////////////////
-// definitions //
-/////////////////
-
-inline void *tm_read_word(void *addr) {
-	return (void *)stm_load(stm_get_tx(), (volatile stm_word_t *)addr);
-}
-
-inline void tm_write_word(void *addr, void *val) {
-	stm_store(stm_get_tx(), (volatile stm_word_t *)addr, (stm_word_t)val);
-}
+#include "stm.h"
+#include "wrappers.h"
 
 #endif // TM_SPEC_H_

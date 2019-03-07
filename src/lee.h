@@ -56,11 +56,11 @@ class GridCell
         { }
 
 		void set_val(int v) {
-			tm_write_word(&m_val, (void *)v);
+			stm_store_int(&m_val, v);
 		}
 
 		int get_val() {
-			return (int)tm_read_word(&m_val);
+			return stm_load_int(&m_val);
 		}
 };
 

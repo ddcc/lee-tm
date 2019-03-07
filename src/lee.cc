@@ -43,7 +43,7 @@
 #include <math.h>
 #include <cstdlib>
 
-#include "tinySTM.h"
+#include "stm.h"
 #include "lee.h"
 
 using namespace std;
@@ -64,18 +64,17 @@ Lee::Lee(const char* file, bool test, bool debug, bool rel)
     if(DEBUG) printf("Creating grid...\n");
     grid = new Grid(GRID_SIZE, GRID_SIZE, 2, rel); //the Lee 3D Grid;
 
-    printf("grid: %d\n", (int)grid);
+    printf("grid: %p\n", grid);
 
     if(DEBUG) printf("Done creating grid\n");
     work = new WorkQueue; // empty
     if(DEBUG) printf("Parsing data...\n");
 //    BEGIN_TRANSACTION;
 
-	int ro_flag = 0;
-	stm_tx_t *tx = stm_new(NULL);
-	jmp_buf buf;
-	sigsetjmp(buf, 1);
-	stm_start(tx, &buf, ro_flag);
+	stm_init_thread();
+	stm_tx_attr_t attr = { 0 };
+	sigjmp_buf *e = stm_start(attr);
+	if (e != NULL) sigsetjmp(*e, 0);
 
     if (!TEST) parseDataFile(file);
     else fakeTestData(); //WARNING: Needs grid at least 10x10x2
@@ -83,7 +82,7 @@ Lee::Lee(const char* file, bool test, bool debug, bool rel)
     if(DEBUG) printf("Adding weights... \n");
     //grid->addWeights();
 
-	stm_commit(tx);
+	stm_commit();
 
 //	END_TRANSACTION;
     if(DEBUG) printf("Done adding weights\n");
@@ -602,7 +601,7 @@ Grid::Grid(int gridWidth, int gridHeight, int gridDepth, bool rel) {
 	grid = (GridCell ***) malloc(sizeof(GridCell ***) * width);
 	if(Lee::DEBUG) printf("instantiate grid\n");
 	instantiateGrid(grid);
-	printf("grid: %d\n", (int)grid);
+	printf("grid: %p\n", grid);
 	if(Lee::DEBUG) printf("reset grid\n");
 //	resetGrid(grid); //Serves no purpose for C++ version
 

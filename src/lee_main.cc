@@ -64,7 +64,7 @@
 
 struct command_line_args {
 	char *input_file_name;
-	
+
 	unsigned thread_count;
 };
 
@@ -134,7 +134,7 @@ bool should_irregular_read(unsigned *seed);
 int main(int argc, char **argv) {
 	parse_arguments(cmdl_args, argv, argc);
 	print_arguments(cmdl_args);
-	
+
 	run_benchmark();
 }
 
@@ -199,7 +199,7 @@ void run_benchmark() {
 	pthread_barrier_init(&end_barrier, NULL, cmdl_args.thread_count);
 
 	// initialize global stm
-	stm_init(0);
+	stm_init(NULL);
 
 	// create Lee benchmark
 	Lee *lee = new Lee(cmdl_args.input_file_name, false, false, false);
@@ -280,8 +280,8 @@ void *thread_main(void *voidargs) {
 
 void run_transactions(thread_args *targ) {
 	Lee *lee = targ->lee;
-	int ro_flag = 0;
-	stm_tx_t *tx = stm_new(NULL);
+	stm_tx_attr_t attr = { 0 };
+	stm_init_thread();
 
 	while(true) {
 		WorkQueue *track = lee->getNextTrack();
@@ -292,8 +292,8 @@ void run_transactions(thread_args *targ) {
 
 		// start tx
 		volatile bool first = true;
-		jmp_buf buf;
-		sigsetjmp(buf, 1);
+		sigjmp_buf *e = stm_start(attr);
+		if (e != NULL) sigsetjmp(*e, 0);
 
 		// check for aborts
 		if(!first) {
@@ -301,8 +301,6 @@ void run_transactions(thread_args *targ) {
 		} else {
 			first = false;
 		}
-
-		stm_start(tx, &buf, ro_flag);
 
 #ifdef IRREGULAR_ACCESS_PATTERN
 		// perform an update or read of contention object
@@ -317,7 +315,7 @@ void run_transactions(thread_args *targ) {
 		lee->layNextTrack(track, targ->private_buffer);
 
 		// end transaction
-		stm_commit(tx);
+		stm_commit();
 
 		targs->commits++;
 	}
@@ -325,13 +323,13 @@ void run_transactions(thread_args *targ) {
 
 int ***create_private_buffer(Lee *lee) {
 	Grid *grid = lee->grid;
-	int ***ret = (int ***)malloc(sizeof(int) * grid->getWidth());
+	int ***ret = (int ***)malloc(sizeof(*ret) * grid->getWidth());
 
 	for(int i = 0;i < grid->getWidth();i++) {
-		ret[i] = (int **)malloc(sizeof(int) * grid->getHeight());
+		ret[i] = (int **)malloc(sizeof(*ret[i]) * grid->getHeight());
 
 		for(int k = 0;k < grid->getHeight();k++) {
-			ret[i][k] = (int *)malloc(sizeof(int) * grid->getDepth());
+			ret[i][k] = (int *)malloc(sizeof(*ret[i][k]) * grid->getDepth());
 		}
 	}
 
