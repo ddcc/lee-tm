@@ -51,8 +51,6 @@
 #define MILLISECONDS_IN_SECOND 1000
 #define MICROSECONDS_IN_MILLISECOND 1000
 
-#define MAX_THREADS 32
-
 #ifdef IRREGULAR_ACCESS_PATTERN
 #define IRREGULAR_WRITE_RATIO 20
 #define IRREGULAR_READ_RATIO 100
@@ -100,7 +98,7 @@ command_line_args cmdl_args;
 pthread_barrier_t start_barrier;
 pthread_barrier_t end_barrier;
 
-thread_args targs[MAX_THREADS];
+thread_args *targs;
 
 ///////////////////////////
 // function declarations //
@@ -205,6 +203,7 @@ void run_benchmark() {
 	Lee *lee = new Lee(cmdl_args.input_file_name, false, false, false);
 
 	// initialize thread arguments
+	targs = (thread_args *)malloc(cmdl_args.thread_count * sizeof(*targs));
 	for(unsigned i = 0;i < cmdl_args.thread_count;i++) {
 		targs[i].lee = lee;
 		targs[i].id = i;
@@ -239,6 +238,8 @@ void run_benchmark() {
 	std::cout << "Total commits per second: " << commits / duration_s << std::endl;
 	std::cout << "Total aborts: " << aborts << std::endl;
 	std::cout << "Total aborts per second: " << aborts / duration_s << std::endl;
+
+	free(targs);
 }
 
 void *thread_main(void *voidargs) {
